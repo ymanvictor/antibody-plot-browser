@@ -183,9 +183,37 @@
       if (p.get('t')) els.site.value = p.get('t');
     }
 
-    els.family.addEventListener('change', ()=>{ populateXY(); updateImg(); });
-    for (const id of ['sex','site','x','y']) els[id].addEventListener('change', updateImg);
-    els.swap.addEventListener('click', ()=>{ const xv = els.x.value; els.x.value = els.y.value; els.y.value = xv; updateImg(); });
+    els.family.addEventListener('change', ()=>{
+  populateXY();
+  updateImg();
+});
+
+for (const id of ['sex','site','x','y']) {
+  els[id].addEventListener('change', () => {
+
+    if (els.x.value === els.y.value) {
+      // Try adjust Y first
+      const yOpts = Array.from(els.y.options).map(o => o.value);
+      const newY = yOpts.find(v => v !== els.x.value);
+
+      if (newY) {
+        els.y.value = newY;
+      } else {
+        // fallback: adjust X
+        const xOpts = Array.from(els.x.options).map(o => o.value);
+        const newX = xOpts.find(v => v !== els.y.value);
+        if (newX) els.x.value = newX;
+      }
+    }
+
+    updateImg();
+  });
+}
+
+els.swap.addEventListener('click', ()=>{
+  const xv = els.x.value; els.x.value = els.y.value; els.y.value = xv; updateImg();
+});
+
     els.copy.addEventListener('click', async ()=>{
       const url = location.href;
       try { await navigator.clipboard.writeText(url); els.status.textContent = 'Link copied to clipboard.'; }
