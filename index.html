@@ -1,175 +1,205 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2566">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Antibody Plot Browser</title>
+  <style>
+    :root{--bg:#0b1020;--card:#111833;--muted:#cbd5e1;--accent:#8ab4ff;--text:#e2e8f0}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1020,#0e1430);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    h1{font-size:24px;margin:0 0 8px}
+    .sub{color:var(--muted);margin-bottom:20px}
+    .panel{background:var(--card);border:1px solid #233057;border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+    @media (max-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}}
+    label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:6px}
+    select{appearance:none;background:#0d1328;border:1px solid #233057;border-radius:10px;color:var(--text);padding:10px 12px}
+    .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    button, .linklike{background:#14224a;border:1px solid #2a3a70;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+    button:hover,.linklike:hover{filter:brightness(1.1)}
+    .imgWrap{margin-top:18px;background:#0b122a;border:1px solid #1e2a52;border-radius:16px;padding:12px;display:flex;justify-content:center;align-items:center;min-height:360px}
+    img{max-width:100%;height:auto;border-radius:12px}
+    .note{color:var(--muted);font-size:12px;margin-top:6px}
+    .error{color:#ffb4b4}
+    footer{margin-top:28px;color:var(--muted);font-size:12px}
+    code{background:#0b122a;border:1px solid #1e2a52;padding:2px 6px;border-radius:6px}
   </style>
 </head>
 <body>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>// =====================</p>
-<p class="p1"><span class="Apple-converted-space">  </span>//<span class="Apple-converted-space">  </span>CONFIGURATION</p>
-<p class="p1"><span class="Apple-converted-space">  </span>// =====================</p>
-<p class="p1"><span class="Apple-converted-space">  </span>// If plots/ is at site root (recommended for GitHub Pages), keep relative:</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const BASE = "plots";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Antigen lists — must match your filenames (before safe() transforms spaces → _)</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const ANTIGENS = {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>flavi: [</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"DENV1 VLP","DENV2 VLP","DENV3 VLP","DENV4 VLP",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"DENV1 NS1","DENV2 NS1","DENV3 NS1","DENV4 NS1",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"DENV1 EDIII","DENV2 EDIII","DENV3 EDIII","DENV4 EDIII",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"ZIKV VLP","ZIKVU NS1","ZIKVSU NS1","ZIKVAS EDIII",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"YFV E","YFV NS1","JEV E","JEV NS1","WNV NS1","WNV EDIII","USUV NS1"</p>
-<p class="p1"><span class="Apple-converted-space">    </span>],</p>
-<p class="p1"><span class="Apple-converted-space">    </span>alpha: ["CHIKV VLP","CHIKV E2","ONNV VLP","MAYV E2","MAYV NSP1"]</p>
-<p class="p1"><span class="Apple-converted-space">  </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Optional placeholder image</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const FALLBACK = "assets/missing.png";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// =====================</p>
-<p class="p1"><span class="Apple-converted-space">  </span>//<span class="Apple-converted-space">  </span>RUNTIME LOGIC</p>
-<p class="p1"><span class="Apple-converted-space">  </span>// =====================</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const els = {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>family: document.getElementById('family'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>sex: document.getElementById('sex'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>site: document.getElementById('site'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>x: document.getElementById('x'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>y: document.getElementById('y'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>img: document.getElementById('plot'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>swap: document.getElementById('swap'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>copy: document.getElementById('copy'),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>status: document.getElementById('status')</p>
-<p class="p1"><span class="Apple-converted-space">  </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function populateXY() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const list = ANTIGENS[els.family.value] || [];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function setOptions(sel) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>sel.innerHTML = '';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (const name of list) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const opt = document.createElement('option');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>opt.value = name;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>opt.textContent = name;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>sel.appendChild(opt);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>setOptions(els.x);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>setOptions(els.y);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (list.length &gt; 1) els.y.value = list[1];</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Build the image URL from current controls</p>
-<p class="p1"><span class="Apple-converted-space">  </span>function buildUrl() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const vals = {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>family: els.family.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>sex: els.sex.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>site: els.site.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>x: els.x.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>y: els.y.value</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const safe = s =&gt; s.replace(/[^A-Za-z0-9._-]+/g, '_'); // mirrors R safe()</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const enc<span class="Apple-converted-space">  </span>= s =&gt; encodeURIComponent(s);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const file = `${safe(vals.x)}__vs__${safe(vals.y)}.png`;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>return `${BASE}/${enc(vals.family)}/${enc(vals.sex)}/${enc(vals.site)}/${enc(file)}`;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function updateImg() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const url = buildUrl();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>els.img.src = url;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>els.img.alt = `${els.x.value} vs ${els.y.value} (${els.sex.value}, ${els.site.value}, ${els.family.options[els.family.selectedIndex].text})`;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Shareable state in hash</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const state = new URLSearchParams({</p>
-<p class="p1"><span class="Apple-converted-space">      </span>f: els.family.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>s: els.sex.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>t: els.site.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>x: els.x.value,</p>
-<p class="p1"><span class="Apple-converted-space">      </span>y: els.y.value</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>history.replaceState(null, '', `#${state.toString()}`);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>preloadNeighbors();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function preloadNeighbors() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const safe = s =&gt; s.replace(/[^A-Za-z0-9._-]+/g, '_');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const enc<span class="Apple-converted-space">  </span>= s =&gt; encodeURIComponent(s);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const variants = [];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// swapped X/Y</p>
-<p class="p1"><span class="Apple-converted-space">    </span>variants.push(`${BASE}/${enc(els.family.value)}/${enc(els.sex.value)}/${enc(els.site.value)}/${enc(safe(els.y.value))}__vs__${enc(safe(els.x.value))}.png`);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// other sexes</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (const altSex of ['Both','Male','Female']) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (altSex !== els.sex.value) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>variants.push(`${BASE}/${enc(els.family.value)}/${enc(altSex)}/${enc(els.site.value)}/${enc(safe(els.x.value))}__vs__${enc(safe(els.y.value))}.png`);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// other sites</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (const opt of Array.from(els.site.options)) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const altSite = opt.value;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (altSite !== els.site.value) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>variants.push(`${BASE}/${enc(els.family.value)}/${enc(els.sex.value)}/${enc(altSite)}/${enc(safe(els.x.value))}__vs__${enc(safe(els.y.value))}.png`);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (const src of variants) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const img = new Image();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>img.decoding = 'async';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>img.src = src;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Error fallback if a file is missing</p>
-<p class="p1"><span class="Apple-converted-space">  </span>els.img.addEventListener('error', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>els.img.removeAttribute('data-tried-alt-sex'); // no alt-sex fallback needed anymore</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (FALLBACK) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>els.img.src = FALLBACK;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>els.status.textContent = 'Plot not found. Showing placeholder.';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>els.status.classList.add('error');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Restore state from URL hash if present</p>
-<p class="p1"><span class="Apple-converted-space">  </span>function restoreFromHash() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const hash = location.hash.replace(/^#/, '');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (!hash) return;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const p = new URLSearchParams(hash);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (p.get('f')) els.family.value = p.get('f');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>populateXY();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (p.get('x')) els.x.value = p.get('x');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (p.get('y')) els.y.value = p.get('y');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (p.get('s')) els.sex.value = p.get('s');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (p.get('t')) els.site.value = p.get('t');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Events</p>
-<p class="p1"><span class="Apple-converted-space">  </span>els.family.addEventListener('change', () =&gt; { populateXY(); updateImg(); });</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (const id of ['sex','site','x','y']) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>els[id].addEventListener('change', updateImg);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>els.swap.addEventListener('click', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const xv = els.x.value; els.x.value = els.y.value; els.y.value = xv; updateImg();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p1"><span class="Apple-converted-space">  </span>els.copy.addEventListener('click', async () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const url = location.href;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>try { await navigator.clipboard.writeText(url); els.status.textContent = 'Link copied to clipboard.'; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>catch { els.status.textContent = 'Copy failed. Select and copy the address bar.'; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(() =&gt; els.status.textContent = '', 2500);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Init</p>
-<p class="p1"><span class="Apple-converted-space">  </span>populateXY();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>restoreFromHash();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>updateImg();</p>
-<p class="p1">&lt;/script&gt;</p>
+  <div class="wrap">
+    <h1>Antibody Plot Browser</h1>
+    <div class="sub">Browse pre-rendered two-by-two plots without exposing raw data.</div>
+
+    <div class="panel">
+      <div class="grid" role="group" aria-label="Plot controls">
+        <label>Family
+          <select id="family">
+            <option value="flavi">Flaviviruses</option>
+            <option value="alpha">Alphaviruses</option>
+          </select>
+        </label>
+        <label>Sex
+          <select id="sex">
+            <option value="Both">Both</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </label>
+        <label>Site
+          <select id="site">
+            <option value="All">All</option>
+            <option value="Peru">Peru</option>
+            <option value="Senegal">Senegal</option>
+            <option value="French Guiana">French Guiana</option>
+            <option value="New Caledonia">New Caledonia</option>
+          </select>
+        </label>
+        <label>X antigen
+          <select id="x"></select>
+        </label>
+        <label>Y antigen
+          <select id="y"></select>
+        </label>
+      </div>
+
+      <div class="row">
+        <button id="swap" title="Swap X and Y">Swap X/Y</button>
+        <button id="copy" title="Copy a shareable link">Copy share link</button>
+        <span id="status" class="note" aria-live="polite"></span>
+      </div>
+
+      <div class="imgWrap" aria-live="polite">
+        <img id="plot" alt="Antibody scatterplot" />
+      </div>
+      <div class="note">If a plot is missing, you'll see a fallback image.
+        File path pattern: <code>plots/{family}/{sex}/{site}/{x}__vs__{y}.png</code>
+      </div>
+    </div>
+
+    <footer>
+      Host the images under <code>plots/...</code> in your GitHub Pages repo.
+      Edit antigen lists in this file. No data or JSON is ever sent—only image URLs are referenced.
+    </footer>
+  </div>
+
+  <script>
+    // =====================
+    //  CONFIGURATION
+    // =====================
+    const BASE = "plots"; // folder at repo root
+
+    const ANTIGENS = {
+      flavi: [
+        "DENV1 VLP","DENV2 VLP","DENV3 VLP","DENV4 VLP",
+        "DENV1 NS1","DENV2 NS1","DENV3 NS1","DENV4 NS1",
+        "DENV1 EDIII","DENV2 EDIII","DENV3 EDIII","DENV4 EDIII",
+        "ZIKV VLP","ZIKVU NS1","ZIKVSU NS1","ZIKVAS EDIII",
+        "YFV E","YFV NS1","JEV E","JEV NS1","WNV NS1","WNV EDIII","USUV NS1"
+      ],
+      alpha: ["CHIKV VLP","CHIKV E2","ONNV VLP","MAYV E2","MAYV NSP1"]
+    };
+
+    const FALLBACK = "assets/missing.png"; // optional placeholder
+
+    // =====================
+    //  RUNTIME LOGIC
+    // =====================
+    const els = {
+      family: document.getElementById('family'),
+      sex: document.getElementById('sex'),
+      site: document.getElementById('site'),
+      x: document.getElementById('x'),
+      y: document.getElementById('y'),
+      img: document.getElementById('plot'),
+      swap: document.getElementById('swap'),
+      copy: document.getElementById('copy'),
+      status: document.getElementById('status')
+    };
+
+    function populateXY() {
+      const list = ANTIGENS[els.family.value] || [];
+      function setOptions(sel) {
+        sel.innerHTML = '';
+        for (const name of list) {
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name; sel.appendChild(opt);
+        }
+      }
+      setOptions(els.x); setOptions(els.y);
+      if (list.length > 1) { els.y.value = list[1]; }
+    }
+
+    function buildUrl() {
+      const vals = {
+        family: els.family.value,
+        sex: els.sex.value,
+        site: els.site.value,
+        x: els.x.value,
+        y: els.y.value
+      };
+      const safe = s => s.replace(/[^A-Za-z0-9._-]+/g, '_'); // mirrors R safe()
+      const enc  = s => encodeURIComponent(s);
+      const file = `${safe(vals.x)}__vs__${safe(vals.y)}.png`;
+      return `${BASE}/${enc(vals.family)}/${enc(vals.sex)}/${enc(vals.site)}/${enc(file)}`;
+    }
+
+    function updateImg() {
+      const url = buildUrl();
+      els.img.src = url;
+      els.img.alt = `${els.x.value} vs ${els.y.value} (${els.sex.value}, ${els.site.value}, ${els.family.options[els.family.selectedIndex].text})`;
+      const state = new URLSearchParams({ f: els.family.value, s: els.sex.value, t: els.site.value, x: els.x.value, y: els.y.value });
+      history.replaceState(null, '', `#${state.toString()}`);
+      preloadNeighbors();
+    }
+
+    function preloadNeighbors(){
+      const safe = s => s.replace(/[^A-Za-z0-9._-]+/g, '_');
+      const enc  = s => encodeURIComponent(s);
+      const variants = [];
+      variants.push(`${BASE}/${enc(els.family.value)}/${enc(els.sex.value)}/${enc(els.site.value)}/${enc(safe(els.y.value))}__vs__${enc(safe(els.x.value))}.png`);
+      for (const altSex of ['Both','Male','Female']){
+        if (altSex!==els.sex.value) variants.push(`${BASE}/${enc(els.family.value)}/${enc(altSex)}/${enc(els.site.value)}/${enc(safe(els.x.value))}__vs__${enc(safe(els.y.value))}.png`);
+      }
+      for (const opt of Array.from(els.site.options)){
+        const altSite = opt.value;
+        if (altSite!==els.site.value) variants.push(`${BASE}/${enc(els.family.value)}/${enc(els.sex.value)}/${enc(altSite)}/${enc(safe(els.x.value))}__vs__${enc(safe(els.y.value))}.png`);
+      }
+      for (const src of variants){ const img = new Image(); img.decoding='async'; img.src = src; }
+    }
+
+    els.img.addEventListener('error', ()=>{
+      if (FALLBACK) { els.img.src = FALLBACK; els.status.textContent = 'Plot not found. Showing placeholder.'; els.status.classList.add('error'); }
+    });
+
+    function restoreFromHash(){
+      const hash = location.hash.replace(/^#/, '');
+      if (!hash) return;
+      const p = new URLSearchParams(hash);
+      if (p.get('f')) els.family.value = p.get('f');
+      populateXY();
+      if (p.get('x')) els.x.value = p.get('x');
+      if (p.get('y')) els.y.value = p.get('y');
+      if (p.get('s')) els.sex.value = p.get('s');
+      if (p.get('t')) els.site.value = p.get('t');
+    }
+
+    els.family.addEventListener('change', ()=>{ populateXY(); updateImg(); });
+    for (const id of ['sex','site','x','y']) els[id].addEventListener('change', updateImg);
+    els.swap.addEventListener('click', ()=>{ const xv = els.x.value; els.x.value = els.y.value; els.y.value = xv; updateImg(); });
+    els.copy.addEventListener('click', async ()=>{
+      const url = location.href;
+      try { await navigator.clipboard.writeText(url); els.status.textContent = 'Link copied to clipboard.'; }
+      catch { els.status.textContent = 'Copy failed. Select and copy the address bar.'; }
+      setTimeout(()=> els.status.textContent = '', 2500);
+    });
+
+    populateXY();
+    restoreFromHash();
+    updateImg();
+  </script>
 </body>
 </html>
